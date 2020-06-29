@@ -4,12 +4,23 @@
 
 > Learning React and ES6 by building a Movie Discovery App.
 
-### # Screens
+### # 0.1 Screens
 
 - [ ] Home
 - [ ] TV Shows
 - [ ] Search
 - [ ] Detail
+
+### # 0.2 API Verbs
+
+- [x] Now playing (Movie)
+- [x] Upcoming (Movie)
+- [x] Top Rated (TV)
+- [x] Popular (TV, Movie)
+- [x] Search (TV, Movie)
+- [x] Airing Today (TV)
+- [x] TV Show Detail
+- [x] Movie Detail
 
 ## 1. Fundamentals
 
@@ -859,7 +870,7 @@
 
   - props
 
-    - `props.location.pathname` 에 해당하는 data를 spread operator를 사용해서 불러온다
+    - `props.location.pathname` 에 해당하는 data를 object destructuring를 사용해서 불러온다
     - 불러온 pathname에 해당하는 Item에 대해서만 `current=true` 가 된다
     - styled-component 정의 과정에서 3항 연산자를 통해 current=true 일 때만 아래쪽 테두리를 준다
 
@@ -886,4 +897,133 @@
     }
     ```
 
-    
+
+## 4. Networking
+
+### # 4.0 Introduction to The Movie DB API
+
+- The Movie DB
+  - [TMDB|API doc](https://developers.themoviedb.org/3)
+
+### # 4.1 Sexy Networking with Axios instances
+
+- `src/ api.js` 파일 생성
+
+  - axios instance 를 만들어서 사용
+
+  ```react
+  import axios from 'axios'
+  
+  const api = axios.create({
+    baseURL: "https://api.themoviedb.org/3/",
+    params: {
+      api_key: "44084423a3ad71eb2acee3298e9a25e8",
+      language: "en-US"
+    }
+  })
+  
+  export default api
+  ```
+
+  - network와 api에 관한 내용만 작성
+
+- axios
+
+  - [github|axios](https://github.com/axios/axios)
+
+    - a package needed to fetch
+
+  - [axios|create an instance](https://github.com/axios/axios)
+
+    - create a new instance of axios with a custom config
+
+      ```react
+      const instance = axios.create({
+        baseURL: 'https://some-domain.com/api/',
+        timeout: 1000,
+        headers: {'X-Custom-Header': 'foobar'}
+      });
+      ```
+
+  - 설치
+
+    ```bash
+    $ npm i axios
+    ```
+
+  - 사용
+
+    ```react
+    import axios from 'axios'
+    ```
+
+### # 4.2~4.3 API Verbs
+
+- moviesApi / tvApi
+
+  ```react
+  import axios from 'axios'
+  
+  const api = axios.create({
+    baseURL: "https://api.themoviedb.org/3/",
+    params: {
+      api_key: "44084423a3ad71eb2acee3298e9a25e8",
+      language: "en-US"
+    }
+  })
+  
+  export const moviesApi = {
+    nowPlaying: () => api.get("movie/now_playing"),
+    upcoming: () => api.get("movie/upcoming"),
+    popular: () => api.get("movie/popular"),
+    movieDetail: (id) => api.get(`movie/${id}`, {
+      params: {
+        append_to_response: "videos"
+      }
+    }),
+    search: (term) => api.get("search/movie", {
+      params: {
+        query: encodeURIComponent(term)
+      }
+    })
+  }
+  
+  export const tvApi = {
+    topRated: () => api.get("tv/top_rated"),
+    popular: () => api.get("tv/popular"),
+    airingToday: () => api.get("tv/airing_today"),
+    showDetail: (id) => api.get(`tv/${id}`, {
+      params: {
+        append_to_response: "videos"
+      }
+    }),
+    search: (term) => api.get("search/tv", {
+      params: {
+        query: encodeURIComponent(term)
+      }
+    })
+  }
+  ```
+
+  - axios instance를 통해 기본 요청 세팅을 하고, movie와 tv에 대해 각각 api verbs를 담은 object를 정의한 후 export
+
+  - append_to_response
+
+    - [TMDB|append to response](https://developers.themoviedb.org/3/getting-started/append-to-response)
+    - 개별 movie 나 tv show에 대한 videos, images 를 더해 주는 것
+
+  - encoding URI
+
+    ```react
+    search: (term) => api.get("search/movie", {
+      params: {
+        query: encodeURIComponent(term)
+      }
+    })
+    ```
+
+    - 특수문자 등에 대비한 encoding URI 
+    - 문자열로 변환한 후 검색하기 위함
+
+## 5. Containers
+
