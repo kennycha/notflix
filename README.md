@@ -532,7 +532,7 @@
   ```
 
   - 전달받은 데이터 유효성 검증을 위한 패키지
-### # 2.1 React Router Part One
+### # 2.1~2.2 React Router
 
 - change `src` structure
 
@@ -672,3 +672,218 @@
     ```
 
     - 현재 url이 어느 Route의 path에도 해당되지 않는다면, Redirect의 to 에 해당하는 주소로 이동
+
+## 3. Styles
+
+### # 3.0~3.2 CSS in React
+
+- options of styling css in react
+
+  - use `styles.css`
+
+    - 간단하지만, Component와 css 가 분리되어 있음
+
+  - make each `Component's folder`
+
+    - 각 Component 별로 폴더를 만들고, 아래와 같이 파일 구성
+
+      ```
+      # src/Components/ExampleComponent/
+      
+      index.js
+      ExampleComponent.js
+      ExampleComponent.css
+      ```
+
+    - 폴더를 만들어야 하고, 매번 css 파일을 import 해야 하고, 여전히 className을 기억해야 한다
+
+  - use `CSS module ` (or scss)
+
+    ```css
+    /* Header.module.css */
+    
+    .navList {
+      display: flex;
+    }
+    
+    .navList:hover {
+      background-color: blue;
+    }
+    ```
+
+    ```react
+    // Header.js
+    
+    import styles from './ExampleComponent.module.css'
+    
+    export default () => (
+      <header>
+        <ul className={styles.navList}>
+          <li>
+            <a href="/">Movies</a>
+          </li>
+        </ul>  
+      </header>
+    )
+    ```
+
+    - css 파일명을 `ExampleComponent.module.css` 로 하고, js 파일과 같은 방식으로 import 한 후, object와 비슷한 방식으로 사용
+    - 임의화 되어 더 안전해졌지만, 여전히 js와 css는 분리되어 있고, className을 기억해야 한다는 불편함
+
+  - styled-components
+
+- styled-components
+
+  - 설치
+
+    ```bash
+    $ npm i styled-components
+    ```
+
+  - 사용
+
+    ```react
+    import React from 'react'
+    import { Link } from 'react-router-dom'
+    import styled from 'styled-components'
+    
+    const Header = styled.header`
+    `
+    const List = styled.ul`
+      display: flex;
+      &:hover {
+        background-color: blue;
+      }
+    `
+    const Item = styled.li`
+    `
+    const SLink = styled(Link)`
+    `
+    
+    export default () => (
+      <Header>
+        <List>
+          <Item>
+            <SLink to="/">Movies</SLink>
+          </Item>
+          <Item>
+            <SLink to="/tv">TV</SLink>
+          </Item>
+          <Item>
+            <SLink to="/search">Search</SLink>
+          </Item>
+        </List>
+      </Header>
+    )
+    ```
+
+    - styled.elementName\`cssInformation\` 의 구조로 styled-component 정의한 후 사용
+    -  `Link` 는 JavaScript 방식으로 이동하도록 한다 (`a` 는 브라우저 방식)
+
+### # 3.3 GlobalStyle and Header
+
+- `createGlobalStyle`
+
+  ```react
+  import { createGlobalStyles } from 'styled-components'
+  import reset from 'styled-reset'
+  
+  const globalStyles = createGlobalStyle`
+    ${reset};
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font=size: 14px;
+      background-color: rgba(20, 20, 20, 1);
+    }
+  `
+  
+  export default globalStyles
+  ```
+
+  - `src/ Components/ GlobalStyles.js` 파일을 생성한 후 전체에 사용할 css 정의
+
+  - styled-reset
+
+    - styled-components를 활용해 css를 초기화하는 패키지
+
+      ```bash
+      # 설치
+      $ npm i styled-reset
+      ```
+
+      ```react
+      // import 한 후 GlobalStyles에 사용
+      // css 가장 윗 줄에 작성
+      import reset from 'styled-reset'
+      
+      const globalStyles = createGlobalStyle`
+        ${reset};
+      `
+      ```
+
+### # 3.4 Location Aware Header
+
+- `props` of styled-components
+
+  ```react
+  import { withRouter } from 'react-router-dom'
+  
+  const Item = styled.li`
+    border-bottom: 3px solid ${props => props.current ? "#3498db" : "transparent"};
+    transition: border-bottom 0.5s ease-in-out;
+  `
+  
+  export default withRouter(({location: { pathname }}) => (
+    <Header>
+      <List>
+        <Item current={pathname === "/"}>
+          <SLink to="/">Movies</SLink>
+        </Item>
+        <Item current={pathname === "/tv"}>
+          <SLink to="/tv">TV</SLink>
+        </Item>
+        <Item current={pathname === "/search"}>
+          <SLink to="/search">Search</SLink>
+        </Item>
+      </List>
+    </Header>
+  ))
+  ```
+
+  - props
+
+    - `props.location.pathname` 에 해당하는 data를 spread operator를 사용해서 불러온다
+    - 불러온 pathname에 해당하는 Item에 대해서만 `current=true` 가 된다
+    - styled-component 정의 과정에서 3항 연산자를 통해 current=true 일 때만 아래쪽 테두리를 준다
+
+  - withRouter
+
+    - [react-router|withRouter](https://reacttraining.com/react-router/core/api/withRouter)
+    - 다른 component를 감싸는 component
+    - withRouter로 감싸면 props를 사용할 수 있게 된다
+
+    ```react
+    export default withRouter(props => (
+      <Header>
+        {console.log(props)}
+      </Header>
+    ))
+    
+    // result
+    {
+      history: {length: 23, action: "POP", location: {…}, createHref: ƒ, push: ƒ, …}
+      location: {pathname: "/", search: "", hash: "", state: undefined, key: "12gipr"}
+      match: {path: "/", url: "/", params: {…}, isExact: true}
+      staticContext: undefined
+      __proto__: Object
+    }
+    ```
+
+    
