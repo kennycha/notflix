@@ -1,5 +1,16 @@
 # NOTFLIX (React JS Basic)
 
+## 0. Notflix
+
+> Learning React and ES6 by building a Movie Discovery App.
+
+### # Screens
+
+- [ ] Home
+- [ ] TV Shows
+- [ ] Search
+- [ ] Detail
+
 ## 1. Fundamentals
 
 > [MDN|JavaScript](https://developer.mozilla.org/ko/docs/Web/JavaScript)
@@ -493,11 +504,12 @@
     $ npm - npx -g
     # npx를 통해 create-react-app 실행
     $ npx create-react-app notflix
-```
-    
-- 사용되지 않는 지나간 버전의 패키지들을 컴퓨터에 저장하지 않기위해 사용
-    - npx를 통해 최신버전의 create-react-app을 설치해 실행하고, 끝나면 컴퓨터에서 삭제
-  
+    ```
+
+    - 사용되지 않는 지나간 버전의 패키지들을 컴퓨터에 저장하지 않기위해 사용
+
+    - npx를 통해 최신버전의 create-react-app을 설치해 실행하고, 끝나면 컴퓨터에서 삭제 
+
 - jsconfig.json
 
   ```json
@@ -509,9 +521,9 @@
   }
   ```
 
-  - root path setting
-    - for absolute imports
-    - [create-react-app|absolute imports](https://create-react-app.dev/docs/importing-a-component/#absolute-imports)
+    - root path setting
+      - for absolute imports
+      - [create-react-app|absolute imports](https://create-react-app.dev/docs/importing-a-component/#absolute-imports)
 
 - prop-types
 
@@ -520,3 +532,143 @@
   ```
 
   - 전달받은 데이터 유효성 검증을 위한 패키지
+### # 2.1 React Router Part One
+
+- change `src` structure
+
+  - `src/ Components/`  폴더를 만든 후 App.js 를 안으로 이동
+
+    - 이때, jsconfig.json 의 설정 때문에, index.js에서 App 을 import 해올 때 아래와 같이 절대경로로 import 가능
+
+    ```react
+    // 기존
+    import App from './Components/App'
+    
+    // absolute import
+    import App from 'Components/App';
+    ```
+
+  - `src/ Routes/` 폴더 생성 
+
+    - 필요한 screen별로 .js 파일 생성
+
+    ```react
+    // Home.js TV.js Search.js Detail.js
+    
+    export default () => 'Home'
+    ```
+
+- react-router
+
+  - [github|react-router](https://github.com/ReactTraining/react-router)
+
+  - [Doc|react-router-dom](https://reacttraining.com/react-router/web/guides/quick-start)
+
+  - 설치
+
+    ```bash
+    $ npm i react-router-dom
+    ```
+
+  - 사용
+
+    ```react
+    // src/Components/App.js
+    
+    import React, { Component } from 'react';
+    import Router from 'Components/Router'
+    
+    class App extends Component {
+      render() {
+        return (
+          <>
+            <Router />
+          </>
+        );  
+      }
+    }
+    
+    export default App;
+    ```
+
+    ```react
+    // src/Components/Router.js
+    
+    import React from 'react'
+    import { HashRouter as Router, Route } from 'react-router-dom'
+    import Home from 'Routes/Home'
+    import TV from 'Routes/TV'
+    import Search from 'Routes/Search'
+    
+    export default () => (
+      <Router>
+        <Route path="/" exact component={Home} />
+        <Route path="/tv" exact component={TV} />
+        <Route path="/search" component={Search} />
+      </Router>
+    )
+    ```
+
+    - `Components/ Router.js` 파일 생성
+    - Router.js 파일에서 Router내에 각 screen 별 Route를 생성하고, Route마다 각 path별로 component들을 연결
+    - App.js 파일에서 Router를 import 한 후 사용
+
+  - HashRouter
+    - `http://localhost:3000/#/search` 와 같이 root에 `/#/` 이 붙은 url 생성
+    - BrowserRouter와 같은 기능을 하지만, 가운데에 `#` 이 있어 웹사이트 보다는 앱에 있다는 느낌을 준다
+    - HashRouter는 URL의 hash portion을, BrowserRouter는 HTML5 history API를 사용
+
+  - Fragments
+
+    - React에서는 하나의 Component만을 return 할 수 있다
+    - 때문에, `<> </> (Fragments)`를 사용해서 여러개의 Component를 return한다
+    - key가 있는 경우, `React.Fragment`를 명시적으로 사용해야 하며, 단축문법인 <></>를 사용할 수 없다
+
+  - Composition
+
+    ```react
+    <Router>
+        <Route path="/tv" exact component={TV} />
+        <Route path="/tv/popular" render={() => <h1>Popular</h1>} />
+      </Router>
+    ```
+
+    - 두개 이상의 Route를 동시에 render 하는 방식
+    - exact가 없는 상태에서 `/tv/popular` 에 두개의 Route가 모두 해당하기 때문에, 둘을 동시에 render한다
+
+  - Switch
+
+    ```react
+    import { Switch } from 'react-router-dom'
+    
+    export default () => (
+      <Router>
+        <Switch>
+          <Route path="/tv" exact component={TV} />
+          <Route path="/tv/popular" render={() => <h1>Popular</h1>} />
+        </Switch>
+      </Router>
+    )
+    
+    ```
+
+    - 한 번에 오직 하나의 Route만 render하도록 만든다
+    - `http://localhost:3000/tv/popular` 로 이동하면 ,`/tv` 에 해당하는 component는 render 되지 않고, `/tv/popular` 에 해당하는 내용만 render 된다
+
+  - Redirect
+
+    ```react
+    import { Redirect } from 'react-router-dom'
+    
+    export default () => (
+      <Router>
+        <Route path="/" exact component={Home} />
+        <Route path="/tv" exact component={TV} />
+        <Route path="/tv/popular" render={() => <h1>Popular</h1>} />
+        <Route path="/search" component={Search} />
+        <Redirect from="*" to="/" />
+      </Router>
+    )
+    ```
+
+    - 현재 url이 어느 Route의 path에도 해당되지 않는다면, Redirect의 to 에 해당하는 주소로 이동
