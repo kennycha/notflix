@@ -1027,3 +1027,143 @@
 
 ## 5. Containers
 
+### # 5.0~5.1 Container Presenter Pattern
+
+- Container-Presenter Pattern
+
+  - [medium|presentational and container components](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0)
+  - [번역|presentational and container components](https://blueshw.github.io/2017/06/26/presentaional-component-container-component/)
+  - 각 component를 container와 presenter로 나눈 후
+    - data 및 logic은 container에
+    - 보여지는 부분은 presenter에 작성
+
+- HomeComponent (`src/ Routes/ Home/`)
+
+  - index.js
+
+    ```react
+    import HomeContainer from './HomeContainer'
+    
+    export default HomeContainer
+    ```
+
+  - HomePresenter
+
+    ```react
+    export default () => "Home"
+    ```
+
+  - HomeContainer
+
+    ```react
+    import React, { Component } from 'react'
+    import HomePresenter from './HomePresenter'
+    
+    export default class extends Component {
+      state = {
+        nowPlaying: null,
+        upcoming: null,
+        popular: null,
+        error: null,
+        loading: true
+      }
+      render() {
+        const { nowPlaying, upcoming, popular, error, loading } = this.state
+        return (
+          <HomePresenter 
+            nowPlaying={nowPlaying}
+            upcoming={upcoming}
+            popular={popular} 
+            error={error}
+            loading={loading}
+          />
+        )
+      }
+    }
+    ```
+
+### # 5.2 Home Container
+
+- home container
+
+  ```react
+  import React, { Component } from 'react'
+  import HomePresenter from './HomePresenter'
+  // 외부에 따로 정의한 api 파일을 가져와 요청
+  import { moviesApi } from 'api'
+  
+  export default class extends Component {
+    // state 초기화
+    state = {
+      nowPlaying: null,
+      upcoming: null,
+      popular: null,
+      loading: true,
+      error: null
+    }
+    // 비동기작업이 일어날 대상
+    async componentDidMount() {
+      try {
+        // await 가 붙은 부분에서 기다린다
+        // object destruncturing을 통해 변수 정의
+        const { data: { results: nowPlaying }} = await moviesApi.nowPlaying()
+        const { data: { results: upcoming }} = await moviesApi.upcoming()
+        const { data: { results: popular }} = await moviesApi.popular()
+        this.setState({
+          // object를 같은 이름으로 set하는 경우 아래와 같이 단축 가능
+          nowPlaying, 
+          upcoming,
+          popular
+        })
+      } catch {
+        this.setState({
+          error: "Can't find movies information."
+        })
+      } finally {
+        // error 발생 여부와 상관없이 loading이 끝났음을 표시
+        this.setState({
+          loading: false
+        })
+      }
+    }
+  
+    render() {
+      const { nowPlaying, upcoming, popular, loading, error } = this.state
+      console.log(this.state)
+      return (
+        <HomePresenter 
+          nowPlaying={nowPlaying}
+          upcoming={upcoming}
+          popular={popular} 
+          loading={loading}
+          error={error}
+        />
+      )
+    }
+  }
+  ```
+
+  - [axios|issue with merging params](https://github.com/axios/axios/issues/2190)
+
+    - 최신 버전 axios에서 axios instance의 params가 자동으로 merge 되지 않는 이슈
+
+    - 0.18.1 버전으로 다운그레이드 하면 해결
+
+      ```bash
+      # install package with version
+      $ npm install axios@0.18.1
+      ```
+
+  - async & await
+
+    - 비동기작업을 위해 사용
+
+  - throw Error
+
+    - error 를 발생시킴
+
+      ```react
+      throw Error()
+      ```
+
+      
