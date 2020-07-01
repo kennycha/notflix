@@ -1166,4 +1166,213 @@
       throw Error()
       ```
 
-      
+### # 5.3 TV Container
+
+- Home Container와 같은 방법으로
+
+### # 5.4 Search Container
+
+- Search Container
+
+  ```react
+  import React, { Component } from 'react'
+  import SearchPresenter from './SearchPresenter'
+  import { moviesApi, tvApi } from 'api'
+  
+  export default class extends Component {
+    state = {
+      movieResults: null,
+      tvResults: null,
+      searchTerm: "",
+      loading: false,
+      error: null
+    }
+    // SearchPresenter의 form에서 입력값이 제출되었을 때 호출할 함수
+    // state의 searchTerm을 가져와 비어있지 않다면 검색(searchByTerm함수)를 실행
+    handleSubmit = () => {
+      const { searchTerm } = this.state
+      if (searchTerm !== "") {
+        this.seachByTerm()
+      }
+    }
+    // api.js 에서 api를 불러와 요청을 보내는 함수
+    seachByTerm = async() => {
+      const { seachTerm } = this.state
+      this.setState({
+        loading: true
+      })
+      try {
+        // moviesApi와 tvApi 모두에서 해당 단어로 검색
+        const { data: {results: movieResults}} = await moviesApi.search(seachTerm)
+        const { data: {results: tvResults}} = await tvApi.search(seachTerm)
+        this.setState({
+          movieResults,
+          tvResults
+        })
+      } catch {
+        this.setState({
+          error: "Can't find results."
+        })
+      } finally {
+        this.setState({
+          loading: false
+        })
+      }
+    }
+  
+    render() {
+      const { movieResults, tvResults, searchTerm ,loading, error } = this.state
+      return (
+        <SearchPresenter 
+          movieResults={movieResults}
+          tvResults={tvResults}
+          searchTerm={searchTerm}
+          loading={loading}  
+          error={error}
+          // SearchPresenter로 form 제출 시 호출할 함수를 내려보내줘야 한다
+          handleSubmit={this.handleSubmit}
+        />
+      )
+    }
+  }
+  ```
+
+  - Presenter 에서 발생하는 event를 handle할 함수를 state data들과 함께 내려보내준다
+
+### # 5.5~5.7 Detail Container
+
+- Detail Container
+
+  ```react
+  import React, { Component } from 'react'
+  import DetailPresenter from './DetailPresenter'
+  import { moviesApi, tvApi } from 'api'
+  
+  export default class extends Component {
+    // 생성자 메서드를 통해 component 클래스 자체에 대한 data
+    constructor(props) {
+      // Router에 속함으로써 가지는 props를 받아서 사용
+      // constructor 내에서 props 사용하려면 super(props)필요
+      super(props)
+      const { location: { pathname } } = props
+      this.state = {
+        result: null,
+        loading: true,
+        error: null,
+        // pathname을 통해 movie인지 tv show인지 체크
+        isMovie : pathname.includes("/movie/")
+      }
+    }
+  
+    async componentDidMount() {
+      const { 
+        // props에서 id param과 push fuction을 가져온다
+        match: { params: { id }},
+        history: { push },
+      } = this.props
+      const { isMovie } = this.state
+      const parsedId = parseInt(id)
+      // id 자리에 숫자 string이 아닌 값이 왔을 때 홈으로 돌려보냄
+      if (isNaN(parsedId)) {
+        return push("/")
+      }
+      // result 값 변화를 위해 let으로 초기 정의
+      let result = null
+      try {
+        if (isMovie) {
+          ({ data: result } = await moviesApi.movieDetail(parsedId))
+        } else {
+          ({ data: result } = await tvApi.showDetail(parsedId))
+        }
+      } catch {
+         this.setState({ error: "Can't find anything." })
+      } finally {
+        this.setState({ loading: false, result })
+      }
+    }
+  
+    render() {
+      const { result, loading, error } = this.state
+      return (
+        <DetailPresenter 
+          result={result}
+          loading={loading}
+          error={error}
+        />
+      )
+    }
+  }
+  ```
+
+  - props를 통해 movie의 detail인지, show의 detail인지 파악
+
+    - `props.match` 내에 id를 포함한 params가 있음
+
+    ```react
+    // console.log(this.props)
+    
+    history: {length: 2, action: "POP", location: {…}, createHref: ƒ, push: ƒ, …}
+    location: {pathname: "/movie/1", search: "", hash: "", state: undefined}
+    match:
+        isExact: true
+        params: {id: "1"}
+        path: "/movie/:id"
+        url: "/movie/1"
+        __proto__: Object
+    staticContext: undefined
+    __proto__: Object
+    ```
+
+  - props.history 내 push 를 사용해, 잘못된 id로 시도한 경우 홈으로 돌려보낸다
+
+    ```react
+    const parsedId = parseInt(id)
+        if (isNaN(parsedId)) {
+          return push("/")
+        }
+    ```
+
+- Route props
+  - withRoute
+    - Header를 만들 때는 Router에 속하지 않기 때문에, withRouter로 감싸서 props가 사용가능하도록 만들었다
+  - 하지만 Router 에 속해있는 Route들은 기본적으로 props를 받는다
+    - this.props를 통해 접근 가능
+
+- parseInt
+  - number
+    - 숫자 string을 parseInt하면 number
+  - NaN
+    - 문자 등 숫자가 아닌 string을 parseInt하면 NaN(Not a Number)
+
+- includes
+  - [MDN|string includes](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/String/includes)
+    - 대상 strings이 특정 단어를 포함하는지
+  - [MDN|array includes](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/includes)
+    - 대상 array가 특정 item을 포함하는지
+- constructor
+  - class 생성 시에 초기설정을 실행하는 method
+
+- destructuring assignment with let
+
+  ```react
+  let result = null
+  try {
+    if (isMovie) {
+      ({ data: result } = await moviesApi.movieDetail(parsedId))
+    } else {
+      ({ data: result } = await tvApi.showDetail(parsedId))
+    }
+  }
+  ```
+
+  - cf) with const
+
+    ```react
+    const { isMovie } = this.state
+    ```
+
+    - 단 const는 재할당이 불가능
+
+  - request를 보내고 response에 따라 재할당을 하기 위해 let을 사용
+
+  - 이때는 전체를 `( )` 로 감싸는 방식으로 비구조화 재할당이 가능
