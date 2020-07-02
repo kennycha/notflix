@@ -11,21 +11,29 @@ export default class extends Component {
     error: null
   }
 
-  handleSubmit = () => {
+  handleSubmit = (event) => {
+    event.preventDefault()
     const { searchTerm } = this.state
     if (searchTerm !== "") {
       this.seachByTerm()
     }
   }
 
+  updateTerm = event => {
+    const { target: { value }} = event
+    this.setState({
+      searchTerm: value
+    })
+  }
+
   seachByTerm = async() => {
-    const { seachTerm } = this.state
+    const { searchTerm } = this.state
     this.setState({
       loading: true
     })
     try {
-      const { data: {results: movieResults}} = await moviesApi.search(seachTerm)
-      const { data: {results: tvResults}} = await tvApi.search(seachTerm)
+      const { data: {results: movieResults}} = await moviesApi.search(searchTerm)
+      const { data: {results: tvResults}} = await tvApi.search(searchTerm)
       this.setState({
         movieResults,
         tvResults
@@ -47,10 +55,11 @@ export default class extends Component {
       <SearchPresenter 
         movieResults={movieResults}
         tvResults={tvResults}
-        searchTerm={searchTerm}
         loading={loading}  
-        error={error}
+        searchTerm={searchTerm}
         handleSubmit={this.handleSubmit}
+        updateTerm={this.updateTerm}
+        error={error}
       />
     )
   }

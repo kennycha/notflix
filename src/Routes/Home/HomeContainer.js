@@ -34,7 +34,6 @@ export default class extends Component {
 
   render() {
     const { nowPlaying, upcoming, popular, loading, error } = this.state
-    console.log(this.state)
     return (
       <HomePresenter 
         nowPlaying={nowPlaying}

@@ -1350,8 +1350,9 @@
   - [MDN|array includes](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/includes)
     - 대상 array가 특정 item을 포함하는지
 - constructor
-  - class 생성 시에 초기설정을 실행하는 method
-
+  
+- class 생성 시에 초기설정을 실행하는 method
+  
 - destructuring assignment with let
 
   ```react
@@ -1376,3 +1377,323 @@
   - request를 보내고 response에 따라 재할당을 하기 위해 let을 사용
 
   - 이때는 전체를 `( )` 로 감싸는 방식으로 비구조화 재할당이 가능
+
+## 6. Presenters
+
+### # 6.0 Presenter Structure
+
+- presenter blueprint
+
+  ```react
+  import React from 'react'
+  import PropTypes from 'prop-types'
+  import styled from 'styled-components'
+  
+  const TVPresenter = ({ topRated, popular, airingToday, loading, error }) => null
+  
+  TVPresenter.propTypes = {
+    topRated: PropTypes.array,
+    popular: PropTypes.array,
+    airingToday: PropTypes.array,
+    // 다른 prop들은 null로 초기화하기 때문에 isRequired false
+    loading: PropTypes.bool.isRequired,
+    error: PropTypes.string
+  }
+  
+  export default TVPresenter
+  ```
+
+  - validate props with PropTypes
+
+### # 6.1 HomePresenter and Section Components
+
+- Section
+
+  ```react
+  // src/ Components/ Section.js
+  // 틀을 만들어 놓는 것
+  
+  import React from 'react'
+  import PropTypes from 'prop-types'
+  import styled from 'styled-components'
+  
+  const Container = styled.div`
+    :not(:last-child) {
+      margin-bottom: 50px;
+    }
+  `
+  const Title = styled.span`
+    font-size: 14px;
+    font-weight: 600;
+  `
+  const Grid = styled.div`
+    margin-top: 25px;
+  `
+  
+  const Section = ({title, children}) => (
+    <Container>
+      <Title>{title}</Title>
+      <Grid>{children}</Grid>
+    </Container>
+  )
+  
+  Section.propTypes = {
+    title: PropTypes.string.isRequired,
+    children: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.node),
+      PropTypes.node
+    ])
+  }
+  
+  export default Section
+  ```
+
+  - children proptypes
+
+    - [stackoverflow|children proptypes](https://stackoverflow.com/questions/42122522/reactjs-what-should-the-proptypes-be-for-this-props-children)
+
+    ```
+    static propTypes = {
+        children: PropTypes.oneOfType([
+            PropTypes.arrayOf(PropTypes.node),
+            PropTypes.node
+          ])
+    ```
+
+  - children
+    - children은 미리 정해진 props
+    - 태그 사이에 들어가는 내용이 children prop이 된다
+    - 예를 들어 `<Section>movie</Section>` 에서 Section 태그로 둘러싸인 부분 자체가 children이 된다
+
+- HomePresenter
+
+  ```react
+  import React from 'react'
+  import PropTypes from 'prop-types'
+  import styled from 'styled-components'
+  import Section from 'Components/Section'
+  import Loader from 'Components/Loader'
+  
+  const Container = styled.div`
+    padding: 0px 10px
+  `
+  
+  // loading 중인 경우에는 nowPlaying, popular, upcoming이 없어 error 발생하기 때문에 삼항연산자를 통해 핸들
+  const HomePresenter = ({ nowPlaying, popular, upcoming, loading, error }) => loading ? <Loader /> : (
+    <Container>
+      <!-- &&를 사용해 nowPlaying이 존재하고, 1개 이상의 item을 담고 있음을 확인한 경우에만 Section을 rendering -->
+      {nowPlaying && nowPlaying.length > 0 && (
+        <Section title="Now Playing">
+          {nowPlaying.map(movie => movie.title)}
+        </Section>
+      )}
+      {upcoming && upcoming.length > 0 && (
+        <Section title="Upcoming Movies">
+          {upcoming.map(movie => movie.title)}
+        </Section>
+      )}
+      {popular && popular.length > 0 && (
+        <Section title="Popular Movies">
+          {popular.map(movie => movie.title)}
+        </Section>
+      )}
+    </Container>
+  )
+  
+  HomePresenter.propTypes = {
+    nowPlaying: PropTypes.array,
+    popular: PropTypes.array,
+    upcoming: PropTypes.array,
+    loading: PropTypes.bool.isRequired,
+    error: PropTypes.string
+  }
+  
+  export default HomePresenter
+  ```
+
+  - Component 폴더에 미리 만들어놓은 Section을 가져와 재사용하는 방식
+
+### # 6.2 TVPresenter and Loader Components
+
+- Loader
+
+  ```react
+  import React from 'react'
+  import styled from 'styled-components'
+  
+  const Container = styled.div`
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    font-size: 28px;
+    margin-top: 20px;
+  `
+  
+  export default() => (
+    <Container>
+      <span role="img" aria-label="Loading">
+        ⏳
+      </span>
+    </Container>
+  )
+  ```
+
+  - Loader가 없는 경우는 카테고리 이동 시 빈화면이 render 된다
+  - `role` / `aria-label` 
+    - for the blind people
+
+- TVPresenter
+
+  - HomePresenter와 동일한 방법으로
+
+- Section components에 Grid 적용
+
+  ```react
+  // src/Components/Section.js
+  
+  const Grid = styled.div`
+    margin-top: 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 125px);
+    grid-gap: 25px;
+  `
+  
+  const Section = ({title, children}) => (
+    <Container>
+      <Title>{title}</Title>
+      <Grid>{children}</Grid>
+    </Container>
+  )
+  ```
+
+  ```react
+  // HomePresenter.js
+  
+  const HomePresenter = ({ nowPlaying, popular, upcoming, loading, error }) => loading ? <Loader /> : (
+    <Container>
+      {nowPlaying && nowPlaying.length > 0 && (
+        // 각 movie별로 element를 만들어줘야 grid의 적용 가능
+        // 이때 movie.id를 key로 지정
+        <Section title="Now Playing">
+          {nowPlaying.map(movie => <span key={movie.id}>{movie.title}</span>)}
+        </Section>
+      )}
+      {upcoming && upcoming.length > 0 && (
+        <Section title="Upcoming Movies">
+          {upcoming.map(movie => <span key={movie.id}>{movie.title}</span>)}
+        </Section>
+      )}
+      {popular && popular.length > 0 && (
+        <Section title="Popular Movies">
+          {popular.map(movie => <span key={movie.id}>{movie.title}</span>)}
+        </Section>
+      )}
+    </Container>
+  )
+  ```
+
+  - auto-fill
+    - [MDN|repeat](https://developer.mozilla.org/en-US/docs/Web/CSS/repeat)
+    - [blog|auto-fill](https://heropy.blog/2019/08/17/css-grid/#auto-fill)
+    - item의 개수가 명확하지 않거나 반응형을 위해 사용
+      - repeat() 과 함께 사용
+      - 넓이를 초과하는 경우 wrap
+
+### # 6.3 SearchPresenter Component
+
+- search presenter
+
+  - 동일한 방법으로 작성
+
+  - 다만 로딩된 결과를 보여줄 때 Fragment로 감싸야 한다 (하나의 component로 묶어야 하기 때문에)
+
+    ```react
+    {loading ? <Loader /> : (
+      <>
+        {movieResults && movieResults.length > 0 && (
+          <Section title="Movie Results">
+            {movieResults.map(movie => <span key={movie.id}>{movie.title}</span>)}
+              </Section>
+        )}
+        {tvResults && tvResults.length > 0 && (
+          <Section title="TV Show Results">
+            {tvResults.map(show => <span key={show.id}>{show.name}</span>)}
+          </Section>
+        )}
+      </>
+    )}
+    ```
+
+- add update logic to search container
+
+  ```react
+  updateTerm = event => {
+    const { target: { value }} = event
+    this.setState({
+      searchTerm: value
+    })
+  }
+  ```
+  - preventDefault
+
+    ```react
+    // SearchContainer.js
+    
+    handleSubmit = (event) => {
+      event.preventDefault()
+      const { searchTerm } = this.state
+      if (searchTerm !== "") {
+        this.seachByTerm()
+      }
+    }
+    ```
+
+    - form에 다른 submit 버튼이 없는 상태에서 input 내 enter를 누르면 submit event가 자동 발생
+    - 자동 submit 은 화면을 re-render해 state를 초기화하기 때문에 이를 막고, 우리가 정의한 handleSubmit을 사용하도록 설정
+
+### # 6.4 Message Component
+
+- Message.js
+
+  ```react
+  import React from 'react'
+  import PropTypes from 'prop-types'
+  import styled from 'styled-components'
+  
+  const Container = styled.div`
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+  `
+  const Text = styled.span`
+    color: ${props => props.color};
+  `
+  
+  const Message = ({ text, color }) => (
+    <Container>
+      <Text color={color}>
+        {text}
+      </Text>
+    </Container>
+  )
+  
+  Message.propTypes = {
+    text: PropTypes.string.isRequired,
+    color: PropTypes.string.isRequired
+  }
+  
+  export default Message
+  ```
+
+- 사용(Error / NotFound)
+
+  ```react
+  {error && <Message color="#e74c3c" text={error} />}
+  {tvResults && movieResults && tvResults.length === 0 && movieResults.length === 0 && (
+    <Message text="Nothing found" color="#95a5a6" />
+  )}
+  ```
+
+  - d
+
