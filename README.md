@@ -1824,3 +1824,138 @@
     - `require()`
       - [blog|CommonJS require( )](https://blueshw.github.io/2017/05/16/ES-require-vs-import/)
       - module import
+
+### # 6.8~6.9 Detail Presenter
+
+- detail presenter
+
+  ```react
+  import React from 'react'
+  import PropTypes from 'prop-types'
+  import styled from 'styled-components'
+  import Loader from 'Components/Loader'
+  
+  // calc를 사용해서 전체 화면 높이에서 nav 높이인 50px 제외한 높이를 부여
+  // Backdrop이 absolute이기 때문에 기준이 되도록 relative position
+  const Container = styled.div`
+    height: calc(100vh - 50px);
+    width: 100%;
+    position: relative;
+    padding: 50px;
+  `
+  // 디테일 화면 배경에 이미지를 흐릿하게 보여주기 위해 Backdrop component 생성
+  // filter: blur 를 통해 흐릿하게
+  const Backdrop = styled.div`
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url(${props => props.bgImage});
+    background-position: center center;
+    background-size: cover;
+    filter: blur(3px);
+    opacity: 0.5;
+  `
+  const Content = styled.div`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    z-index: 1;
+  `
+  const Cover = styled.div`
+    height: 100%;
+    width: 30%;
+    background-image: url(${props => props.bgImage});
+    background-position: center center;
+    background-size: cover;
+    border-radius: 5px;
+  `
+  const Data = styled.div`
+    width: 70%;
+    margin-left: 10px;
+  `
+  const Title = styled.h3`
+    font-size: 32px;
+    margin-bottom: 10px;
+  `
+  const ItemContainer = styled.div`
+    margin: 20px 0;
+  `
+  const Item = styled.span``
+  const Divider = styled.span`
+    margin: 0 10px;
+  `
+  const Overview = styled.p`
+    font-size: 12px;
+    opacity: 0.7;
+    line-height: 1.5;
+    width: 50%;
+  `
+  // 항상 loading 체크하는 것을 습관화
+  const DetailPresenter = ({ result, loading, error }) => loading ? <Loader /> : (
+    <Container>
+      <Backdrop 
+        bgImage={`https://image.tmdb.org/t/p/original${result.backdrop_path}`} 
+      />
+      <Content>
+        <Cover 
+          // movie와 tv의 이미지 속성이 다르기 때문에 삼항연산자 사용
+          bgImage={
+            result.poster_path 
+              ? `https://image.tmdb.org/t/p/original${result.poster_path}`
+              : require("../../assets/noPosterSmall.png")
+          } 
+        />
+        <Data>
+          <Title>
+            {result.original_title 
+              ? result.original_title 
+              : result.original_name}
+          </Title>
+          <ItemContainer>
+            <Item>
+              {result.release_date 
+                ? result.release_date.substring(0, 4) 
+                : result.first_air_date.substring(0, 4)}
+            </Item>
+            <Divider>·</Divider>
+            <Item>
+              {result.runtime 
+                ? result.runtime 
+                : result.episode_run_time[0]} min
+            </Item>
+            <Divider>·</Divider>
+            <Item>
+              <!-- 
+  			map method는 두번째 인자로 index 가질 수 있다 
+  			이를 활용해서 마지막 item(genre)을 제외한 item들에 특정 function 적용 가능
+  			-->
+              {result.genres && result.genres.map((genre, index) => 
+                index === result.genres.length-1 
+                  ? genre.name 
+                  : `${genre.name} / `
+              )}
+            </Item>
+          </ItemContainer>
+          <Overview>
+            {result.overview}
+          </Overview>
+        </Data>
+      </Content>
+    </Container>
+  ) 
+  
+  DetailPresenter.propTypes = {
+    result: PropTypes.object,
+    loading: PropTypes.bool.isRequired,
+    error: PropTypes.string
+  }
+  
+  export default DetailPresenter
+  ```
+
+### # 6.10 React Helmet
+
