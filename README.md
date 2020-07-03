@@ -4,14 +4,18 @@
 
 > Learning React and ES6 by building a Movie Discovery App.
 
-### # 0.1 Screens
+### # 0.1 Preview
 
-- [ ] Home
-- [ ] TV Shows
-- [ ] Search
-- [ ] Detail
+Try it on [netlify](https://stupefied-hawking-969e86.netlify.app/#/)
 
-### # 0.2 API Verbs
+### # 0.2 Screens
+
+- [x] Home
+- [x] TV Shows
+- [x] Search
+- [x] Detail
+
+### # 0.3 API Verbs
 
 - [x] Now playing (Movie)
 - [x] Upcoming (Movie)
@@ -2009,7 +2013,9 @@
   - [Netlify](https://www.netlify.com/)
   - deploy static front-end website
 
-
+- `BrowserRouter` vs `HashRouter`
+  - 서버사이드렌더링이 있는 경우에는 `BrowserRouter` 사용
+  - 그렇지 않은 경우에는 `HashRouter` 를 사용해서 새로고침 시 에러가 발생하지 않도록
 
 
 
