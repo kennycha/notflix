@@ -1959,3 +1959,46 @@
 
 ### # 6.10 React Helmet
 
+- react helmet
+
+  - [github|react-helmet](https://github.com/nfl/react-helmet)
+
+  - manage document head
+
+  - 설치
+
+    ```bash
+    $ npm install react-helmet
+    ```
+
+  - 사용
+
+    ```react
+    // DetailPresenter.js
+    
+    import Helmet from 'react-helmet'
+    // loading 중일 때와 끝난 후의 페이지 title을 다르게 설정
+    const DetailPresenter = ({ result, loading, error }) => 
+      loading 
+        ? (
+        <>
+          <Helmet>
+            <title>Loading | Notflix</title>
+          </Helmet>
+          <Loader />
+        </>
+      ) : (
+        <Container>
+          <Helmet>
+            <title>
+              {result.original_title 
+                ? result.original_title 
+                : result.original_name} | Notflix
+            </title>
+          </Helmet>
+        </Container>
+      )
+    export default DetailPresenter
+    ```
+
+    
