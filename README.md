@@ -2001,4 +2001,24 @@
     export default DetailPresenter
     ```
 
-    
+## 7. Deployment
+
+### # 7.1 Deploying to Netlify
+
+- Netlify
+  - [Netlify](https://www.netlify.com/)
+  - deploy static front-end website
+
+
+
+
+
+## 10. Code Challenges
+
+### # 10.0 Challenge List
+
+- [ ] IMDB Link
+- [ ] Tabs inside of Movie / Show Details (YT Videos, Production Company & Countries)
+- [ ] Collections Link
+- [ ] /collections Route
+- [ ] On TV Show, show seasons and creators

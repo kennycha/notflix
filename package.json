@@ -25,6 +25,7 @@
   "eslintConfig": {
     "extends": "react-app"
   },
+  "homepage": "https://stupefied-hawking-969e86.netlify.app",
   "browserslist": {
     "production": [
       ">0.2%",
