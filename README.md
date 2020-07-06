@@ -2017,7 +2017,472 @@ Try it on [netlify](https://stupefied-hawking-969e86.netlify.app/#/)
   - 서버사이드렌더링이 있는 경우에는 `BrowserRouter` 사용
   - 그렇지 않은 경우에는 `HashRouter` 를 사용해서 새로고침 시 에러가 발생하지 않도록
 
+## 8. TypeScript with React
 
+### # 8.1~8.2 Introduction to TypeScript
+
+- JavaScript 의 superset
+
+  - 개발과정에서 실수와 버그를 줄이기 위함
+  - JavaScript에서는 production 에서 알 수 있는 문제들
+    - 특히 변수나 인자의 type과 관련된
+
+- parameter types
+
+  ```javascript
+  // javascript
+  
+  const plus = (a, b) => a + b;
+  
+  console.log(plus('2', 2))
+  // result
+  '22'
+  ```
+
+  ```typescript
+  // typescript
+  
+  const plus = (a: number, b: number) => a + b;
+  
+  console.log(plus('2', 2))	// error 발생
+  ```
+
+- variable types
+
+  ```typescript
+  // typescript
+  
+  let hello: string = 'hello'
+  hello = 2	// error 발생
+  ```
+
+- return types
+
+  ```typescript
+  const greet = (name: string, age: number): string => {
+  	return `Hello ${name} you are ${age} years old`
+  }
+  
+  console.log(greet('Nicolas', 18))
+  ```
+
+  - function의 return 값의 type을 지정
+    - return 하지 않거나, return 값의 type이 다른 경우 error
+
+- TypeScript interface
+
+  ```javascript
+  const kenny = {
+      name: 'Kenny',
+      age: 29,
+      hungry: true
+  }
+  
+  const helloToHuman = (human) => {
+      console.log(`Hello ${human.name}! you are ${human.age} years old`)
+  }
+  
+  helloTohuman(kenny)
+  // result
+  Hello Kenny! you are 29 years old
+  
+  helloTohuman(1)
+  // result
+  Hello undefined! you are undefined years old
+  ```
+
+  ```typescript
+  const kenny = {
+      name: 'Kenny',
+      age: 29,
+      hungry: true
+  }
+  
+  const lynn = {
+      name: 'Lynn',
+      hungry: false
+  }
+  
+  interface IHuman {
+      name: string
+      age?: number
+      hungry: boolean
+  }
+  
+  const helloToHuman = (human: IHuman) => {
+      console.log(`Hello ${human.name}! you are ${human.age} years old`)
+  }
+  
+  helloToHuman(kenny)
+  // result
+  Hello Kenny! you are 29 years old
+  
+  helloToHuman(lynn)
+  // result
+  Hello Lynn! you are undefined years old
+  
+  helloTohuman(1)	// error 발생
+  ```
+
+  - interface is like **a shape of an object**
+  - `?` 를 사용해, 선택적 값으로 설정
+    - 위의 경우 age의 type은 number or undefined로 설정
+
+### # 8.3 TypeScript and React Introduction
+
+- React 앱 생성 with typescript
+
+  ```bash
+  $ npx create-react-app typescript-react-demo --typescript
+  ```
+
+  - `--typescript` 를 붙여 typescript 를 포함한 앱 생성
+  - `tsconfig.json` 파일을 포함한 react-app 생성
+  - `src/` 폴더 내 파일 확장자들을 보면, 
+    - jsx 대신 tsx
+    - js 대신 ts
+
+- tsconfig.json
+
+  - typescript가 얼마나 strict할 것인지에 대한 설정
+
+  - ex) noImplicitAny
+
+    ```json
+    {
+      // ...
+      "noImplicitAny": false
+    }
+    ```
+
+    - Any type 허용에 대한 rule
+
+    - 위의 설정이 없으면 아래의 코드는 error 를 내지만, 위의 설정 후에는 정상 작동
+
+      ```typescript
+      const plus = (a, b) => a + b
+      ```
+
+- DefinitelyTyped
+
+  - [github|Definitely Typed](https://github.com/DefinitelyTyped/DefinitelyTyped)
+
+  - npm javascript 패키지들을 typescript 에서 사용할 수 있도록 만든 패키지들
+
+  - 설치 (ex. styled-components)
+
+    ```bash
+    $ npm install styled-components
+    $ npm install @types/styled-components
+    ```
+
+    - 기존 패키지명 앞에 `@types/` 를 붙인 패키지를 함께 설치
+
+  - 사용
+
+    ```react
+    import { createGlobalStyle } from 'styled-components'
+    
+    const GlobalStyle = createGlobalStyle`
+      body {
+        padding: 0;
+        margin: 0;
+      }
+    `
+    ```
+
+    - 기존 패키지를 불러와 사용
+    - @types 패키지가 없으면 type이 정해져 있지 않아 error 발생
+
+  - 만약 사용하려는 패키지의 @types가 존재하지 않는다면, `tsconfig.json`에서 아래와 같이 설정
+
+    ```json
+    {
+      // ...
+      "noImplicitAny": true
+    }
+    ```
+
+### # 8.4 React State and TypeScript
+
+- react state with typescript
+
+  ```tsx
+  import React, { Component } from 'react';
+  
+  // state에 대한 interface 생성
+  interface IState {
+    counter: number
+  }
+  
+  // Component의 props와 state에 대한 type 설정
+  class App extends Component<{}, IState> {
+    state = {
+      counter: 0
+    }
+    render() {
+      const { counter } = this.state
+      return (
+        <div>
+          {counter}
+          <button onClick={this.add}>Add</button>
+        </div>
+      )
+    }
+    // return 값이 없는 경우 void로 type 설정 가능
+    add = (): void => {
+      this.setState(prev => {
+        return {
+          counter: prev.counter + 1
+        }
+      })
+    }
+  }
+  
+  export default App;
+  ```
+
+### # 8.5 React Props and TypeScript
+
+- react props with typescript
+
+  - App.tsx
+
+    ```tsx
+    import React, { Component } from 'react';
+    import Number from './Number'
+    
+    interface IState {
+      counter: number
+    }
+    
+    // class component에 typescript 적용방법
+    class App extends Component<{}, IState> {
+      state = {
+        counter: 0
+      }
+      render() {
+        const { counter } = this.state
+        return (
+          <div>
+            <Number count={counter} />
+            <button onClick={this.add}>Add</button>
+          </div>
+        )
+      }
+      add = (): void => {
+        this.setState(prev => {
+          return {
+            counter: prev.counter + 1
+          }
+        })
+      }
+    }
+    
+    export default App;
+    ```
+
+  - Number.tsx
+
+    ```tsx
+    import React from 'react'
+    import styled from 'styled-components'
+    
+    const Container = styled.span``
+    
+    interface IProps{
+      count: number
+    }
+    
+    // functional component에 typescript 적용방법
+    const Number: React.FunctionComponent<IProps> = ({ count }) => (
+      <Container>
+        {count}
+      </Container>
+    )
+    
+    export default Number
+    ```
+
+### # 8.6 React Events and TypeScript
+
+- react events and typescript
+
+  - Input.tsx
+
+    ```tsx
+    // Input.tsx
+    
+    import React from 'react'
+    
+    interface IInputProps {
+      value: string
+      // event prop을 받는 함수에 대한 type설정
+      onChange: (event: React.SyntheticEvent<HTMLInputElement>) => void
+    }
+    
+    // value, onChange() 를 prop으로 받는 input component에 대한 type 설정
+    // props에 대해서는 interface를 통한 type 설정
+    export const Input: React.FunctionComponent<IInputProps> = ({ value, onChange }) => (
+      <input 
+        type="text" 
+        placeholder="Name" 
+        value={value}
+        onChange={onChange}  
+      />
+    )
+    
+    interface IFormProps {
+      onFormSubmit: (event: React.FormEvent) => void
+    }
+    
+    // children은 기본 prop으로 들어가 있어 추가적인 type설정 필요 없다
+    export const Form: React.FunctionComponent<IFormProps> = ({ children, onFormSubmit }) => (
+      <form onSubmit={onFormSubmit}>{children}</form>
+    )
+    ```
+
+  - App.tsx
+
+    ```tsx
+    // App.tsx
+    
+    import React, { Component } from 'react';
+    import { Form, Input } from './Input'
+    
+    interface IState {
+      counter: number
+      name: string
+    }
+    
+    class App extends Component<{}, IState> {
+      state = {
+        counter: 0,
+        name: ""
+      }
+      render() {
+        const { counter, name } = this.state
+        return (
+          <div>
+            <Form onFormSubmit={this.onFormSubmit}>
+              <Input value={name} onChange={this.onChange}/>
+            </Form>
+          </div>
+        )
+      }
+      onChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+        console.log(event.target)
+      }
+      onFormSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+      }
+    }
+    
+    export default App;
+    ```
+
+    - SyntheticEvent
+      - [docs|React SyntheticEvent](https://ko.reactjs.org/docs/events.html)
+
+### # 8.7~8.8 Styled Components and TypeScript
+
+- styled components and typescript
+
+  ```tsx
+  import React from 'react'
+  import styled from 'styled-components'
+  
+  const Container = styled.span<{isBlue: boolean}>`
+    color: ${props => props.isBlue ? "blue" : "black"}
+  `
+  
+  interface IProps{
+    count: number
+  }
+  
+  const Number: React.FunctionComponent<IProps> = ({ count }) => (
+    <Container isBlue={count > 10}>
+      {count}
+    </Container>
+  )
+  
+  export default Number
+  ```
+
+  - component에 대해서는 interface를 작성/ styled-component에 대해서는 inline으로 처리
+
+- style component theme and typescript
+
+  - theme.ts
+
+    ```typescript
+    export default {
+      blueColor: "red"
+    }
+    ```
+
+  - styled.d.ts
+
+    ```typescript
+    import 'styled-components'
+    
+    declare module 'styled-components' {
+      export interface DefaultTheme {
+        blueColor: string;
+      }
+    }
+    ```
+
+  - index.tsx
+
+    ```tsx
+    import React from 'react';
+    import ReactDOM from 'react-dom';
+    import App from './App';
+    import { ThemeProvider } from 'styled-components'
+    // style 변수가 정의되어있는 파일
+    import theme from './theme'
+    
+    ReactDOM.render(
+      // ThemeProvider로 감싼 후 prop을 통해 하위 component에서 theme에 접근할 수 있도록
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>,
+      document.getElementById('root')
+    );
+    
+    ```
+
+  - Number.tsx
+
+    ```tsx
+    import React from 'react'
+    import styled from 'styled-components'
+    
+    // props로 내려받은 theme내 blueColor를 가져와 변수처럼 사용
+    const Container = styled.span<{isBlue: boolean}>`
+      color: ${props => props.isBlue ? props.theme.blueColor : "black"}
+    `
+    
+    interface IProps{
+      count: number
+    }
+    
+    const Number: React.FunctionComponent<IProps> = ({ count }) => (
+      <Container isBlue={count > 10}>
+        {count}
+      </Container>
+    )
+    
+    export default Number
+    ```
+
+  - style-components theme
+    - [docs|theme with typescript](https://styled-components.com/docs/api#create-a-theme)
+    - theme: style에 있어 variable을 정의해 재사용하는 방법
+  - `theme.ts` 에 사용하려는 theme을 정의하고
+    - `styled.d.ts` 에 해당 theme 내의 각각 변수에 대한 type을 설정
+    - `index.tsx`에서 App component를 ThemeProvider로 감싼 후 , theme을 prop으로 전달해 사용
 
 ## 10. Code Challenges
 
