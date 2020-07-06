@@ -2484,6 +2484,324 @@ Try it on [netlify](https://stupefied-hawking-969e86.netlify.app/#/)
     - `styled.d.ts` 에 해당 theme 내의 각각 변수에 대한 type을 설정
     - `index.tsx`에서 App component를 ThemeProvider로 감싼 후 , theme을 prop으로 전달해 사용
 
+## 9. React Hooks
+
+### # 9.1 Context and State Management
+
+- React has State & Props
+
+  - State는 매우 자주 공유
+
+  - data 요청 및 사용 방식
+
+    1. 각 화면에서 매번 요청
+
+    - 여러 화면에서 반복적으로 사용하는 data를 매 화면에서 요청보내는 것은 비효율
+
+    2. 각 화면을 모두 포함하는 큰 Component를  만들고 각 화면으로 보내주는 방식
+
+    - data를 받아올 뿐 아니라, data의 수정 삭제까지 이루어져야 하는 경우 문제 발생
+    - Component가 너무 커졌을 때나, 더 깊은 단계에서 해당 data를 재사용해야 할 때 문제 발생
+
+    3. State Management
+
+    - use one data store
+    - 별개의 분리된 object에 모든 data를 보관
+
+- context & redux 
+
+  - context는 간단한 react app에 활용
+  - redux는 더 많은 state와 많은 변화들이 있을 경우 적합
+
+### # 9.2 useContext in Action
+
+- react with context
+
+  - context.js
+
+    ```jsx
+    import React, { useState } from 'react'
+    
+    // context 생성
+    export const UserContext = React.createContext()
+    
+    // context의 provider
+    const UserContextProvider = ({children}) => {
+      // user object와 이를 set할 수 있는 함수
+      const [user, setUser] = useState({
+        name: "Kenny",
+        loggedIn: false
+      })
+      // user object의 loggedIn만 바꾼 후 set
+      const logUserIn = () => setUser({ ...user, loggedIn: true })
+      const logUserOut = () => setUser({ ...user, loggedIn: false })
+    
+      return (
+       	// value를 통해 children에서 접근 가능한 data를 설정
+        <UserContext.Provider value={{ user, logUserIn, logUserOut }}>
+          <!-- Provider로 둘러싸인 children에서 context의 data에 접근 가능 -->
+          {children}
+        </UserContext.Provider>
+      )
+    }
+    
+    export default UserContextProvider
+    ```
+
+    - createContext
+      - context 생성
+
+  - App.js
+
+    ```jsx
+    import React from 'react';
+    import Screen from './Screen'
+    import UserContextProvider from './context';
+    
+    function App() {
+      return (
+        // Screen을 context provider로 감싸서 data에 접근 가능하게
+        // 즉, Screen component가 children이 된다
+        <UserContextProvider>
+          <Screen />
+        </UserContextProvider>
+      );
+    }
+    
+    export default App;
+    ```
+
+  - Header.js
+
+    ```jsx
+    import React, { useContext } from "react"
+    import { UserContext } from "./context"
+    
+    const Header = () => {
+      // UserContext에서 name, loggedIn을 가져와 사용
+      const { user: { name, loggedIn }} = useContext(UserContext)
+      return (
+        <header>
+          <a href="#">Home</a> Hello, {name}, you are {loggedIn ? "logged in" : "anonymous"}
+        </header>
+      )
+    }
+    
+    export default Header
+    ```
+
+    - useContext
+      - context의 data를 사용
+      - `useContext(사용하려는 context)` 의 형식
+
+  - Screen.js
+
+    ```jsx
+    import React, { useContext } from 'react'
+    import Header from './Header'
+    import { UserContext } from './context'
+    
+    const Screen = () => {
+      const { user: { loggedIn }, logUserIn, logUserOut } = useContext(UserContext)
+      return (
+        <div>
+          <Header />
+          <h1>First Screen</h1>
+          {loggedIn 
+            ? (<button onClick={logUserOut}>Log user out</button>) 
+            : (<button onClick={logUserIn}>Log user in</button>)}
+        </div>
+      )
+    }
+    
+    export default Screen
+    ```
+
+    - Screen에서 data를 변경하고, Header에서는 이를 듣고 있다
+
+### # 9.3 Recap and Improvements
+
+- Recap
+
+  - context.js
+
+    ```jsx
+    import React, { useState, useContext } from 'react'
+    
+    export const UserContext = React.createContext()
+    
+    const UserContextProvider = ({children}) => {
+      const [user, setUser] = useState({
+        name: "Kenny",
+        loggedIn: false
+      })
+      const logUserIn = () => setUser({ ...user, loggedIn: true })
+      const logUserOut = () => setUser({ ...user, loggedIn: false })
+    
+      return (
+        <UserContext.Provider value={{ user, fn: { logUserIn, logUserOut } }}>
+          {children}
+        </UserContext.Provider>
+      )
+    }
+    
+    export const useUser = () => {
+      const { user } = useContext(UserContext)
+      return user
+    }
+    
+    export const useFns = () => {
+      const { fn } = useContext(UserContext)
+      return fn
+    }
+    
+    export default UserContextProvider
+    ```
+
+  - Header.js
+
+    ```jsx
+    import React from "react"
+    import { useUser } from "./context"
+    
+    const Header = () => {
+      const { name, loggedIn } = useUser()
+      return (
+        <header>
+          <a href="#">Home</a> Hello, {name}, you are {loggedIn ? "logged in" : "anonymous"}
+        </header>
+      )
+    }
+    
+    export default Header
+    ```
+
+  - Screen.js
+
+    ```jsx
+    import React from 'react'
+    import Header from './Header'
+    import { useFns, useUser } from './context'
+    
+    const Screen = () => {
+      const { loggedIn } = useUser()
+      const { logUserIn, logUserOut } = useFns()
+      return (
+        <div>
+          <Header />
+          <h1>First Screen</h1>
+          {loggedIn 
+            ? (<button onClick={logUserOut}>Log user out</button>) 
+            : (<button onClick={logUserIn}>Log user in</button>)}
+        </div>
+      )
+    }
+    
+    export default Screen
+    ```
+
+    - 코드를 좀 더 함수형으로 개선
+      - 단축키와 비슷한 느낌
+    - 반복되는 부분 최소화
+      - context에서 불러오는 작업을 미리 한 후 내려보내주는 방식
+
+### # 9.4~9.5 Building Hypertranslate
+
+- hyper translate
+
+  - context.js
+
+    ```jsx
+    import React, { useState, useContext, createContext } from 'react'
+    
+    // Context 생성
+    const LangContext = createContext()
+    
+    // Provider
+    // children에 더해, defaultLang, translations를 받는다
+    const Lang = ({ defaultLang, children, translations }) => {
+      const [lang, setLang] = useState(defaultLang)
+      const hyperTranslate = (text) => {
+        if (lang === defaultLang) {
+          return text
+        } else {
+          return translations[lang][text]
+        }
+      }
+      return (
+        <LangContext.Provider value={{ setLang, t: hyperTranslate }}>
+          {children}
+        </LangContext.Provider>
+      )
+    }
+    
+    export const useSetLang = (lang) => {
+      const { setLang } = useContext(LangContext)
+      return setLang
+    }
+    
+    export const useT = () => {
+      const { t } = useContext(LangContext)
+      return t
+    }
+    
+    export default Lang
+    ```
+
+  - translations.js
+
+    ```jsx
+    const translations = {
+      "es": {
+        "Hello!": "Hola!",
+        "Translate": "Traducir"
+      }
+    }
+    
+    export default translations
+    ```
+
+  - App.js
+
+    ```jsx
+    import React from 'react';
+    import Screen from './Screen'
+    import Lang from './context';
+    import translations from './translations';
+    
+    function App() {
+      return (
+        <Lang defaultLang="en" translations={translations}>
+          <Screen />
+        </Lang>
+      );
+    }
+    
+    export default App;
+    ```
+
+  - Screen.js
+
+    ```jsx
+    import React from 'react'
+    import { useSetLang, useT } from './context'
+    
+    export default () => {
+      const setLang = useSetLang()
+      const t = useT()
+      return (
+        <>
+          <h1>{t("Hello!")}</h1>
+          <button onClick={() => setLang('es')}>{t("Translate")}</button>
+        </>
+      )
+    }
+    ```
+
+    
+
+
+
 ## 10. Code Challenges
 
 ### # 10.0 Challenge List
