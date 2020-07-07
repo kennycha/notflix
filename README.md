@@ -2798,9 +2798,312 @@ Try it on [netlify](https://stupefied-hawking-969e86.netlify.app/#/)
     }
     ```
 
+
+### # 9.6~9.11 Building HyperTodos
+
+- Reducer
+
+  ```jsx
+  import React, { useReducer } from 'react';
+  
+  const INCREMENT = "increment"
+  const DECREMENT = "decrement"
+  
+  const reducer = (state, action) => {
+    switch (action.type) {
+      case INCREMENT:
+        return {count: state.count + 1};
+      case DECREMENT:
+        return {count: state.count - 1};
+      default:
+        throw new Error();
+    }
+  }
+  
+  function App() {
+    const [state, dispatch] = useReducer(reducer, { count: 0 });
+    return (
+      <>
+        <h1>{state.count}</h1>
+        <button onClick={() => dispatch({ type: INCREMENT })}>Add</button>
+        <button onClick={() => dispatch({ type: DECREMENT })}>Sub</button>
+      </>
+    );
+  }
+  
+  export default App;
+  ```
+
+  - useReducer
+    - [docs|useReducer](https://ko.reactjs.org/docs/hooks-reference.html#usereducer)
+    - Reducer function을 직접 사용할 수 있게 하는 기능
+  - why useReducer
+    - component가 많은 수의 state를 포함할 때
+    - state 내용을 수정하는 과정에서 정확히 뭘 하는 지 파악하기 위해 정리정돈이 필요
+    - state를 변경/수정/추가 하는 것이 아니라, **대체** 한다는 것이 포인트
+  - dispatch
+    - useReducer는 state와 dispatch를 return
+    - dispatch를 통해 reducer function으로 실행
+      - 이때 현재의 state와 action을 가지고 실행
+  - `switch` statement
+    - [MDN|switch](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Statements/switch)
+    - `if~else` 문과 동일한 기능
+
+- HyperTodos app
+
+  - components/App.js
+
+    ```jsx
+    import React from 'react';
+    import Add from './Add';
+    import List from './List';
+    import { useState } from '../context';
+    import ToDo from './ToDo';
     
+    function App() {
+      const { toDos, completed} = useState()
+      return (
+        <>
+          <Add />
+          <List name={"To Dos"}>
+            {toDos.map((toDo) => (
+              <ToDo key={toDo.id} id={toDo.id} text={toDo.text} isCompleted={false} />
+            ))}
+          </List>
+          <List name={completed.length !== 0 ? "Completed" : ""}>
+            {completed.map((toDo) => (
+              <ToDo key={toDo.id} id={toDo.id} text={toDo.text} isCompleted={true} />
+            ))}
+          </List>
+        </>
+      );
+    }
+    
+    export default App;
+    
+    ```
 
+  - components/Add.js
 
+    ```jsx
+    import React, { useState, useContext } from 'react'
+    import { ADD } from '../actions'
+    import { useDispatch } from '../context'
+    
+    export default () => {
+      const [newToDo, setNewTodo] = useState('')
+      const dispatch = useDispatch()
+      const onSubmit = e => {
+        e.preventDefault()
+        dispatch({ type: ADD, payload: newToDo })
+        setNewTodo('')
+      }
+      const onChange = e => {
+        const {
+          target: { value }
+        } = e
+        setNewTodo(value)
+      }
+      return (
+        <>
+          <h1>Add to do</h1>
+          <form onSubmit={onSubmit}>
+              <input 
+                value={newToDo}
+                type='text' 
+                placeholder='Write to do' 
+                onChange={onChange}
+              />
+          </form>
+        </>
+      )
+    }
+    ```
+
+  - components/List.js
+
+    ```jsx
+    import React from 'react'
+    
+    export default ({ name, children }) => (
+      <>
+        <h1>{name}</h1>
+        <ul>
+          {children}
+        </ul>
+      </>
+    )
+    ```
+
+  - components/ToDo.js
+
+    ```jsx
+    import React from 'react'
+    import { COMPLETE, UNCOMPLETE, DEL } from '../actions'
+    import { useDispatch } from '../context'
+    
+    export default ({ text, id, isCompleted }) => {
+      const dispatch = useDispatch()
+      return (
+        <li>
+          <span>{text}</span>
+          <span 
+            role="img" 
+            aria-label='' 
+            onClick={() => dispatch({ type: DEL, payload: id })}
+          >
+            ❌
+          </span>
+          <span 
+            role="img" 
+            aria-label='' 
+            onClick={() => 
+              dispatch({ type: isCompleted ? UNCOMPLETE : COMPLETE, payload: id })}
+          >
+            {isCompleted ? "🔙" : "✅"}
+          </span>
+        </li>
+      )
+    }
+    ```
+
+  - action.js
+
+    ```jsx
+    export const ADD = "add"
+    export const DEL = 'del'
+    export const COMPLETE = 'complete'
+    export const UNCOMPLETE = 'uncomplete'
+    ```
+
+  - context.js
+
+    ```jsx
+    import React, { createContext, useReducer, useContext } from 'react'
+    import reducer, { initialState } from './reducer'
+    
+    const ToDosContext = createContext()
+    
+    const ToDosProvider = ({ children }) => {
+      const [state, dispatch] = useReducer(reducer, initialState)
+      return (
+        <ToDosContext.Provider value={{ state, dispatch }}>
+          {children}
+        </ToDosContext.Provider>
+      )
+    }
+    
+    export const useDispatch = () => {
+      const { dispatch } = useContext(ToDosContext)
+      return dispatch
+    }
+    
+    export const useState = () => {
+      const { state } = useContext(ToDosContext)
+      return state
+    }
+    
+    export default ToDosProvider
+    ```
+
+  - index.js
+
+    ```jsx
+    import React from 'react';
+    import ReactDOM from 'react-dom';
+    import App from './components/App';
+    import ToDosProvider from './context';
+    
+    ReactDOM.render(
+      <ToDosProvider>
+        <App />
+      </ToDosProvider>,
+      document.getElementById('root')
+    );
+    ```
+
+  - reducer.js
+
+    ```jsx
+    import React, { useReducer, useState } from 'react';
+    import { v4 as uuidv4 } from 'uuid';
+    import { ADD, DEL, COMPLETE, UNCOMPLETE} from './actions';
+    
+    export const initialState = {
+      toDos: [],
+      completed: []
+    }
+    
+    const reducer = (state, action) => {
+      switch (action.type) {
+        case ADD:
+          return { 
+            ...state, 
+            toDos: [ ...state.toDos , { text: action.payload, id: uuidv4() }] };
+        case DEL:
+          return { 
+            ...state, 
+            toDos: state.toDos.filter(toDo => toDo.id !== action.payload), 
+            completed: state.completed.filter(toDo => toDo.id !== action.payload) }
+        case COMPLETE:
+          const target = state.toDos.find(toDo => toDo.id === action.payload)
+          return { 
+            ...state, 
+            toDos: state.toDos.filter(toDo => toDo.id !== action.payload), 
+            completed: [...state.completed, target] }
+        case UNCOMPLETE:
+          const aTarget = state.completed.find(toDo => toDo.id === action.payload)
+          return { 
+            ...state, 
+            toDos: [...state.toDos, aTarget],
+            completed: state.completed.filter(toDo => toDo.id !== action.payload)}
+        default:
+          return
+      }
+    }
+    
+    export default reducer
+    ```
+
+  - anti mutation
+    - array에 item을 push 하는 것처럼 array자체를 변형하는 것이 아니라,  새로운 array를 만든 후 대체하는 방법
+
+  - uuid
+
+    - [npm|uuid](https://www.npmjs.com/package/uuid)
+
+    - 엄청나게 긴 랜덤 숫자를 만들어주는 모듈
+
+    - 설치
+
+      ```bash
+      $ npm install uuid
+      ```
+
+    - 사용
+
+      ```jsx
+      import { v4 as uuidv4 } from 'uuid';
+      
+      const reducer = (state, action) => {
+        switch (action.type) {
+          case ADD:
+            return { toDos: [ ...state.toDos , { text: action.payload, id: uuidv4() }] };
+        }
+      }
+      ```
+
+  - array method `find`
+
+    - [MDN|find](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/find)
+
+  - reducer with context
+
+### # 9.12 Conclusion
+
+- challenge list
+
+- [ ] edit todo
 
 ## 10. Code Challenges
 
